@@ -2,54 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PromptJam - Join or Host</title>
+    <title>Unspooled</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 650px; margin: 40px auto; padding: 20px; line-height: 1.5; background: #f8fafc; }
-        .card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 24px; }
-        input, button { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 12px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px; }
-        button { background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { background: #1d4ed8; }
-        .error { color: #dc2626; margin-bottom: 12px; font-weight: bold; }
-        .archive-item { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .archive-item a { color: #2563eb; text-decoration: none; font-weight: bold; }
-        .archive-item a:hover { text-decoration: underline; }
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 650px; margin: 40px auto; padding: 20px; line-height: 1.5; background: #f8fafc; color: #1e293b; }
+        .card { background: white; padding: 24px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 24px; }
+        h1 { font-size: 2.2rem; margin-bottom: 4px; letter-spacing: -0.02em; }
+        p.subtitle { color: #64748b; margin-top: 0; margin-bottom: 24px; }
+        input, button { width: 100%; padding: 12px; margin-top: 6px; margin-bottom: 14px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; }
+        button { background: #0f172a; color: white; border: none; font-weight: 600; cursor: pointer; transition: background 0.2s ease; }
+        button:hover { background: #334155; }
+        .error { color: #dc2626; margin-bottom: 14px; font-weight: 600; }
+        .archive-item { border-bottom: 1px solid #f1f5f9; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .archive-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
-    <h1>✍️ Prompt Jam</h1>
+    <h1>🧵 Unspooled</h1>
+    <p class="subtitle">Spontaneous, timed collective writing.</p>
 
     {% if error %}
     <div class="error">{{ error }}</div>
     {% endif %}
 
     <div class="card">
-        <h2>Join Session</h2>
+        <h2>Join a Session</h2>
         <form method="POST">
             <input type="hidden" name="action" value="join">
             <label>Room Code:</label>
             <input type="text" name="room_code" placeholder="e.g. AB12CD" required>
-            <label>Your Name:</label>
+            <label>Your Name / Pseudonym:</label>
             <input type="text" name="user_name" placeholder="Enter your display name" required>
-            <button type="submit">Join Room</button>
+            <button type="submit">Join Session</button>
         </form>
     </div>
 
     <div class="card">
-        <h2>Admin: Host a Session</h2>
+        <h2>Host a Session</h2>
         <form method="POST">
             <input type="hidden" name="action" value="create">
-            <label>Admin Password:</label>
-            <input type="password" name="admin_key" placeholder="Enter admin password" required>
-            <label>Writing Topic:</label>
-            <input type="text" name="topic" placeholder="e.g. A letter found inside an old clock" required>
-            <button type="submit" style="background: #059669;">Create 30-Min Room</button>
+            <label>Host Passcode:</label>
+            <input type="password" name="admin_key" placeholder="Enter host passcode" required>
+            <label>Writing Prompt / Topic:</label>
+            <input type="text" name="topic" placeholder="e.g. The clock that stopped running backwards" required>
+            <button type="submit" style="background: #2563eb;">Create 30-Min Room</button>
         </form>
     </div>
 
-    <!-- Past Sessions Archive -->
     {% if past_rooms %}
     <div class="card">
-        <h2>📚 Past Sessions Archive</h2>
+        <h2>📚 Unspooled Archive</h2>
         {% for r in past_rooms %}
         <div class="archive-item">
             <div>
@@ -60,7 +61,7 @@
                 <input type="hidden" name="action" value="join">
                 <input type="hidden" name="room_code" value="{{ r['room_code'] }}">
                 <input type="hidden" name="user_name" value="Reader">
-                <button type="submit" style="margin:0; padding:6px 12px; font-size:0.85rem;">View Writings</button>
+                <button type="submit" style="margin:0; padding:8px 14px; font-size:0.85rem; background:#64748b;">Read</button>
             </form>
         </div>
         {% endfor %}

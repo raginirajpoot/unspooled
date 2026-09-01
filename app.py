@@ -2,27 +2,28 @@ import sqlite3
 import random
 import string
 import time
+import os
 from flask import Flask, render_template, request, session, redirect, url_for
 from flask_socketio import SocketIO, join_room, emit
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'unspooled-secret-key-dev')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 DB_FILE = 'jam.db'
-ADMIN_PASS = "admin123"
+# Reads password from Render environment variable, fallback for local development
+ADMIN_PASS = os.environ.get('ADMIN_PASSWORD', 'admin123')
 
 # --- Database Helper Functions ---
 
 def get_db():
     conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row  # Allows accessing columns by name like dicts
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
     with get_db() as conn:
         cursor = conn.cursor()
-        # Rooms table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS rooms (
                 room_code TEXT PRIMARY KEY,
@@ -33,7 +34,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        # Submissions table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS submissions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,14 +131,11 @@ def on_join(data):
 
     with get_db() as conn:
         room_data = conn.execute("SELECT * FROM rooms WHERE room_code = ?", (code,)).fetchone()
-        
-        # Load user's saved draft if resuming
         user_draft = conn.execute(
             "SELECT content FROM submissions WHERE room_code = ? AND author_name = ?",
             (code, name)
         ).fetchone()
 
-        # Load all finished submissions if room is ended
         all_subs = {}
         if room_data and room_data['status'] == 'finished':
             rows = conn.execute("SELECT author_name, content FROM submissions WHERE room_code = ?", (code,)).fetchall()
