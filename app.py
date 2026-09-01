@@ -11,10 +11,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'unspooled-secret-key-de
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 DB_FILE = 'jam.db'
-# Reads password from Render environment variable, fallback for local development
 ADMIN_PASS = os.environ.get('ADMIN_PASSWORD', 'admin123')
-
-# --- Database Helper Functions ---
 
 def get_db():
     conn = sqlite3.connect(DB_FILE)
@@ -52,8 +49,6 @@ init_db()
 def generate_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-# --- HTTP Routes ---
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -62,20 +57,25 @@ def index():
         if action == 'create':
             admin_key = request.form.get('admin_key')
             if admin_key != ADMIN_PASS:
-                return render_template('index.html', error="Invalid Admin Password", past_rooms=get_finished_rooms())
+                return render_template('index.html', error="Invalid Host Passcode", past_rooms=get_finished_rooms())
             
             topic = request.form.get('topic')
+            try:
+                duration_mins = int(request.form.get('duration', 30))
+            except ValueError:
+                duration_mins = 30
+
             room_code = generate_code()
             
             with get_db() as conn:
                 conn.execute(
                     "INSERT INTO rooms (room_code, topic, duration, status) VALUES (?, ?, ?, ?)",
-                    (room_code, topic, 30 * 60, 'waiting')
+                    (room_code, topic, duration_mins * 60, 'waiting')
                 )
                 conn.commit()
 
             session['room_code'] = room_code
-            session['user_name'] = "Admin"
+            session['user_name'] = "Host"
             session['is_admin'] = True
             return redirect(url_for('room', code=room_code))
 
@@ -87,9 +87,9 @@ def index():
                 room_data = conn.execute("SELECT * FROM rooms WHERE room_code = ?", (room_code,)).fetchone()
 
             if not room_data:
-                return render_template('index.html', error="Room not found.", past_rooms=get_finished_rooms())
+                return render_template('index.html', error="Sigil not found in the records.", past_rooms=get_finished_rooms())
             if not user_name:
-                return render_template('index.html', error="Please enter a name.", past_rooms=get_finished_rooms())
+                return render_template('index.html', error="Please state your scribe byline.", past_rooms=get_finished_rooms())
 
             session['room_code'] = room_code
             session['user_name'] = user_name
@@ -118,10 +118,9 @@ def room(code):
     return render_template('room.html', 
                            code=code, 
                            topic=room_data['topic'], 
+                           duration=room_data['duration'],
                            is_admin=session.get('is_admin', False),
                            user_name=session['user_name'])
-
-# --- SocketIO Real-Time Handlers ---
 
 @socketio.on('join')
 def on_join(data):
@@ -145,6 +144,7 @@ def on_join(data):
         emit('sync_state', {
             'status': room_data['status'],
             'end_time': room_data['end_time'],
+            'duration': room_data['duration'],
             'draft': user_draft['content'] if user_draft else '',
             'submissions': all_subs
         })
@@ -159,7 +159,10 @@ def on_start(data):
                 end_time = time.time() + room_data['duration']
                 conn.execute("UPDATE rooms SET status = 'running', end_time = ? WHERE room_code = ?", (end_time, code))
                 conn.commit()
-                emit('timer_started', {'end_time': end_time}, to=code)
+                emit('timer_started', {
+                    'end_time': end_time,
+                    'duration': room_data['duration']
+                }, to=code)
 
 @socketio.on('save_draft')
 def on_save(data):

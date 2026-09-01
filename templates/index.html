@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unspooled</title>
-    <!-- Retro Typewriter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
     
     <style>
         :root[data-theme="light"] {
@@ -64,21 +63,15 @@
             border-radius: 4px;
             cursor: pointer;
             box-shadow: 2px 2px 0px var(--border-color);
-            transition: all 0.15s ease;
-        }
-
-        .theme-toggle-btn:hover {
-            transform: translate(-1px, -1px);
-            box-shadow: 3px 3px 0px var(--border-color);
         }
 
         h1, h2, h3 {
-            font-family: 'Special Elite', cursive, serif;
+            font-family: 'Cinzel', serif;
             letter-spacing: 0.04em;
         }
 
         h1 {
-            font-size: 2.8rem;
+            font-size: 2.6rem;
             margin: 0;
             line-height: 1.1;
         }
@@ -102,7 +95,6 @@
             position: relative;
         }
 
-        /* Subtle retro desk tape accent */
         .card::before {
             content: "";
             position: absolute;
@@ -124,7 +116,7 @@
             color: var(--text-muted);
         }
 
-        input {
+        input, select {
             width: 100%;
             padding: 10px 12px;
             margin-top: 6px;
@@ -138,31 +130,53 @@
             border-radius: 2px;
         }
 
-        input:focus {
+        input:focus, select:focus {
             outline: 2px solid var(--accent);
             border-color: transparent;
+        }
+
+        .prompt-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-oracle {
+            background: var(--page-bg);
+            border: 1px solid var(--border-color);
+            color: var(--accent);
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.85rem;
+            padding: 10px 14px;
+            margin-top: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 2px 2px 0px var(--border-color);
+        }
+
+        .btn-oracle:hover {
+            background: var(--accent);
+            color: #fff;
         }
 
         button.btn-primary {
             width: 100%;
             padding: 12px;
-            margin-top: 10px;
+            margin-top: 14px;
             background: var(--accent);
             color: #ffffff;
             border: 1px solid rgba(0,0,0,0.15);
-            font-family: 'Special Elite', cursive, serif;
-            font-size: 1.1rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
             letter-spacing: 0.05em;
             cursor: pointer;
             border-radius: 2px;
             box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
-            transition: all 0.15s ease;
         }
 
         button.btn-primary:hover {
             background: var(--accent-hover);
-            transform: translate(-1px, -1px);
-            box-shadow: 3px 3px 0px rgba(0,0,0,0.25);
         }
 
         .error {
@@ -180,10 +194,6 @@
             justify-content: space-between;
             align-items: center;
         }
-
-        .archive-item:last-child {
-            border-bottom: none;
-        }
     </style>
 </head>
 <body>
@@ -194,21 +204,21 @@
     </div>
 
     <h1>🧵 Unspooled</h1>
-    <p class="subtitle">A 30-minute spontaneous typewriting circle.</p>
+    <p class="subtitle">Spontaneous, timed collective inscription.</p>
 
     {% if error %}
     <div class="error">{{ error }}</div>
     {% endif %}
 
     <div class="card">
-        <h2>Join Session</h2>
+        <h2>Enter a Séance</h2>
         <form method="POST">
             <input type="hidden" name="action" value="join">
-            <label>Session Code</label>
+            <label>Session Sigil (Code)</label>
             <input type="text" name="room_code" placeholder="e.g. AB12CD" maxlength="8" required autocomplete="off">
             
-            <label>Writer Pseudonym</label>
-            <input type="text" name="user_name" placeholder="Enter your byline" required>
+            <label>Scribe Byline</label>
+            <input type="text" name="user_name" placeholder="Enter your moniker" required>
             
             <button class="btn-primary" type="submit">Take A Seat</button>
         </form>
@@ -218,13 +228,24 @@
         <h2>Host Desk</h2>
         <form method="POST">
             <input type="hidden" name="action" value="create">
-            <label>Passcode</label>
+            <label>Host Passcode</label>
             <input type="password" name="admin_key" placeholder="Enter host passcode" required>
             
-            <label>Prompt / Topic</label>
-            <input type="text" name="topic" placeholder="e.g. The forgotten draft in the margin..." required>
+            <label>The Prompt</label>
+            <div class="prompt-input-row">
+                <input type="text" id="topicInput" name="topic" placeholder="e.g. A letter found inside an antique clock" required>
+                <button type="button" class="btn-oracle" onclick="consultOracle()" title="Summon a random occult prompt">🔮 Consult Oracle</button>
+            </div>
+
+            <label>The Hourglass (Duration)</label>
+            <select name="duration">
+                <option value="5">5 Minutes (Lightning Sprint)</option>
+                <option value="10">10 Minutes (Quick Inscription)</option>
+                <option value="15">15 Minutes (Standard Study)</option>
+                <option value="30" selected>30 Minutes (Deep Alchemical Séance)</option>
+            </select>
             
-            <button class="btn-primary" type="submit" style="background: var(--text-color); color: var(--page-bg);">Open 30-Min Room</button>
+            <button class="btn-primary" type="submit" style="background: var(--text-color); color: var(--page-bg);">Strike The Flame & Open Room</button>
         </form>
     </div>
 
@@ -235,7 +256,7 @@
         <div class="archive-item">
             <div>
                 <strong style="font-size: 1.05rem;">{{ r['topic'] }}</strong><br>
-                <small style="color: var(--text-muted);">CODE: {{ r['room_code'] }} | {{ r['created_at'][:10] }}</small>
+                <small style="color: var(--text-muted);">SIGIL: {{ r['room_code'] }} | {{ r['created_at'][:10] }}</small>
             </div>
             <form method="POST" style="margin:0;">
                 <input type="hidden" name="action" value="join">
@@ -249,23 +270,39 @@
     {% endif %}
 
     <script>
-        // Theme initialization & toggle handler
+        const ORACLE_PROMPTS = [
+            "The letter found slipped between the pages of an uncut 19th-century volume.",
+            "An apothecary shop that only opens during total solar eclipses.",
+            "Write the final confession of an archivist who cataloged forbidden stars.",
+            "The grandfather clock in the hallway has started ticking backward.",
+            "A memory you are certain belonged to someone who died before you were born.",
+            "Two estranged travelers trapped inside a railway carriage during a torrential downpour.",
+            "An envelope arrives with no stamp, sealed in dark green wax.",
+            "The mirror that reflects everything except the person standing directly in front of it.",
+            "A lighthouse keeper notices an unmapped island rising from the fog at midnight.",
+            "You find a notebook in a coffee shop filled with descriptions of your tomorrow.",
+            "The museum curator discovers that one of the marble statues has turned warm to the touch."
+        ];
+
+        function consultOracle() {
+            const randomPrompt = ORACLE_PROMPTS[Math.floor(Math.random() * ORACLE_PROMPTS.length)];
+            const input = document.getElementById('topicInput');
+            input.value = randomPrompt;
+            input.focus();
+        }
+
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('unspooled-theme', theme);
             const btn = document.getElementById('themeBtn');
-            if (btn) {
-                btn.innerText = theme === 'dark' ? '☀ Parchment Mode' : '☾ Carbon/Night Mode';
-            }
+            if (btn) btn.innerText = theme === 'dark' ? '☀ Parchment' : '☾ Shadow Desk';
         }
 
         function toggleTheme() {
             const current = document.documentElement.getAttribute('data-theme') || 'light';
-            const next = current === 'light' ? 'dark' : 'light';
-            setTheme(next);
+            setTheme(current === 'light' ? 'dark' : 'light');
         }
 
-        // Apply saved theme immediately on load
         (function() {
             const saved = localStorage.getItem('unspooled-theme') || 'light';
             setTheme(saved);
