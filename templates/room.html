@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unspooled - Room {{ code }}</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- html2pdf for client-side PDF downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <!-- Retro Typewriter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,7 +92,6 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* Typewriter styled writing area */
         textarea {
             width: 100%;
             height: 440px;
@@ -147,6 +148,23 @@
             background: var(--accent-hover);
         }
 
+        .btn-pdf {
+            background: var(--text-color);
+            color: var(--page-bg);
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            cursor: pointer;
+            margin-top: 14px;
+            display: inline-block;
+        }
+
+        .btn-pdf:hover {
+            opacity: 0.85;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -168,6 +186,9 @@
             border-bottom: 1px dashed var(--border-color);
             padding-bottom: 8px;
             color: var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .hidden {
@@ -222,10 +243,11 @@
     <script>
         const socket = io();
         const code = "{{ code }}";
+        const currentUserName = "{{ user_name }}";
+        const currentTopic = "{{ topic }}";
         const isHost = {{ 'true' if is_admin else 'false' }};
         let countdownInterval;
 
-        // Theme management
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('unspooled-theme', theme);
@@ -246,7 +268,6 @@
             setTheme(saved);
         })();
 
-        // Real-time synchronization
         socket.emit('join', { code: code });
 
         function startTimer() {
@@ -320,12 +341,75 @@
 
             const container = document.getElementById('submissions-grid');
             container.innerHTML = '';
+            
             for (const [author, text] of Object.entries(submissions)) {
                 const card = document.createElement('div');
                 card.className = 'sheet-card';
-                card.innerHTML = `<h4>⌨ ${author}</h4><p style="white-space: pre-wrap; font-family: 'Courier Prime', monospace; line-height: 1.7;">${text || '<i>[Page left blank]</i>'}</p>`;
+                
+                const isCurrentUser = (author === currentUserName);
+                const safeAuthor = escapeHtml(author);
+                const safeText = escapeHtml(text || '[Page left blank]');
+
+                let cardHtml = `
+                    <h4>
+                        <span>⌨ ${safeAuthor}</span>
+                        ${isCurrentUser ? '<small style="color:var(--text-muted); font-size:0.75rem;">(You)</small>' : ''}
+                    </h4>
+                    <p style="white-space: pre-wrap; font-family: 'Courier Prime', monospace; line-height: 1.7;">${safeText}</p>
+                `;
+
+                // If this is the current writer's text, add PDF export button
+                if (isCurrentUser || isHost) {
+                    cardHtml += `<button class="btn-pdf" onclick="downloadPDF('${safeAuthor}')">📥 Download Manuscript (PDF)</button>`;
+                }
+
+                card.innerHTML = cardHtml;
                 container.appendChild(card);
             }
+        }
+
+        function downloadPDF(author) {
+            const rawText = document.getElementById('editor').value || "No content.";
+            const dateStr = new Date().toLocaleDateString();
+
+            // Create a clean off-screen printable manuscript
+            const element = document.createElement('div');
+            element.style.padding = '40px';
+            element.style.fontFamily = "'Courier Prime', Courier, monospace";
+            element.style.color = '#111';
+            element.style.backgroundColor = '#fff';
+            element.style.lineHeight = '1.8';
+
+            element.innerHTML = `
+                <div style="border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 24px;">
+                    <p style="font-size: 11px; text-transform: uppercase; margin: 0; color: #666; letter-spacing: 1px;">UNSPOOLED &bull; SESSION MANUSCRIPT</p>
+                    <h1 style="font-size: 22px; margin: 6px 0;">${escapeHtml(currentTopic)}</h1>
+                    <p style="font-size: 13px; margin: 0; color: #444;">Author: <strong>${escapeHtml(author)}</strong> &bull; Date: ${dateStr}</p>
+                </div>
+                <div style="white-space: pre-wrap; font-size: 14px; text-align: justify;">${escapeHtml(rawText)}</div>
+                <div style="margin-top: 50px; border-top: 1px dotted #aaa; padding-top: 10px; font-size: 11px; color: #888; text-align: center;">
+                    Generated by Unspooled &bull; Spontaneous Timed Writing
+                </div>
+            `;
+
+            const opt = {
+                margin:       15,
+                filename:     `unspooled-${author.toLowerCase().replace(/[^a-z0-9]/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
     </script>
 </body>
