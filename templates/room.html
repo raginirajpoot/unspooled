@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Room: {{ code }}</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; padding: 20px; background: #f8fafc; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        .timer { font-size: 2rem; font-weight: bold; color: #dc2626; }
+        textarea { width: 100%; height: 350px; padding: 12px; font-size: 1.1rem; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; resize: vertical; }
+        .btn { padding: 10px 18px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; background: #2563eb; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+        .card { background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h2>Topic: {{ topic }}</h2>
+            <small>Room Code: <strong>{{ code }}</strong> | User: <strong>{{ user_name }}</strong></small>
+        </div>
+        <div class="timer" id="timer-display">30:00</div>
+    </div>
+
+    {% if is_admin %}
+    <div id="admin-controls" style="margin: 16px 0;">
+        <button id="start-btn" class="btn" style="background:#059669;" onclick="startTimer()">Start 30-Min Countdown</button>
+    </div>
+    {% endif %}
+
+    <div id="editor-section" style="margin-top: 20px;">
+        <p id="status-msg">Waiting for the admin to start the session...</p>
+        <textarea id="editor" placeholder="Your story starts here..." disabled></textarea>
+    </div>
+
+    <div id="reveal-section" class="hidden">
+        <h3>🎉 Time is up! Submissions:</h3>
+        <div id="submissions-grid" class="grid"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        const code = "{{ code }}";
+        const isHost = {{ 'true' if is_admin else 'false' }};
+        let countdownInterval;
+
+        socket.emit('join', { code: code });
+
+        function startTimer() {
+            socket.emit('start_timer', { code: code });
+        }
+
+        // Auto-save typing every 5 seconds
+        setInterval(() => {
+            const text = document.getElementById('editor').value;
+            if (!document.getElementById('editor').disabled) {
+                socket.emit('save_draft', { code: code, text: text });
+            }
+        }, 5000);
+
+        socket.on('timer_started', (data) => {
+            document.getElementById('editor').disabled = false;
+            document.getElementById('status-msg').innerText = "Session active. Write away!";
+            if (document.getElementById('admin-controls')) {
+                document.getElementById('admin-controls').classList.add('hidden');
+            }
+            runCountdown(data.end_time);
+        });
+
+        socket.on('sync_state', (data) => {
+            // Restore previous text draft if reloading page
+            if (data.draft) {
+                document.getElementById('editor').value = data.draft;
+            }
+
+            if (data.status === 'running') {
+                document.getElementById('editor').disabled = false;
+                document.getElementById('status-msg').innerText = "Session active. Write away!";
+                if (document.getElementById('admin-controls')) {
+                    document.getElementById('admin-controls').classList.add('hidden');
+                }
+                runCountdown(data.end_time);
+            } else if (data.status === 'finished') {
+                showResults(data.submissions);
+            }
+        });
+
+        socket.on('session_ended', (data) => {
+            clearInterval(countdownInterval);
+            showResults(data.submissions);
+        });
+
+        function runCountdown(endTime) {
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                const now = Date.now() / 1000;
+                const remaining = Math.max(0, Math.floor(endTime - now));
+
+                const mins = String(Math.floor(remaining / 60)).padStart(2, '0');
+                const secs = String(remaining % 60).padStart(2, '0');
+                document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    const text = document.getElementById('editor').value;
+                    socket.emit('save_draft', { code: code, text: text });
+                    if (isHost) {
+                        socket.emit('finish_session', { code: code });
+                    }
+                }
+            }, 1000);
+        }
+
+        function showResults(submissions) {
+            document.getElementById('editor-section').classList.add('hidden');
+            document.getElementById('reveal-section').classList.remove('hidden');
+            document.getElementById('timer-display').innerText = "00:00";
+
+            const container = document.getElementById('submissions-grid');
+            container.innerHTML = '';
+            for (const [author, text] of Object.entries(submissions)) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<h4>✍️ ${author}</h4><p style="white-space: pre-wrap;">${text || '<i>Left blank</i>'}</p>`;
+                container.appendChild(card);
+            }
+        }
+    </script>
+</body>
+</html>
