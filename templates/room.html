@@ -3,56 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unspooled - Room {{ code }}</title>
+    <title>Unspooled - Séance {{ code }}</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <!-- html2pdf for client-side PDF downloads -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <!-- Retro Typewriter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
 
     <style>
         :root[data-theme="light"] {
-            --bg-color: #f7f3e8;
-            --page-bg: #fffdf9;
-            --text-color: #2b2620;
-            --text-muted: #726859;
-            --border-color: #d8cebe;
-            --accent: #9e3d24;
-            --accent-hover: #7c2d18;
-            --card-shadow: 4px 4px 0px #d8cebe;
-            --input-bg: #fffdfa;
-            --tape-color: rgba(220, 205, 175, 0.45);
+            --bg-color: #f5f0e3;
+            --page-bg: #fcf9f2;
+            --text-color: #231f1a;
+            --text-muted: #6e6456;
+            --border-color: #cfc2ad;
+            --accent: #8b2614;
+            --accent-hover: #6d1b0d;
+            --card-shadow: 4px 4px 0px #cfc2ad;
+            --wax-seal: #8b1e1e;
             --paper-line: rgba(0, 0, 0, 0.04);
+            --candle-wax: #e8ddc8;
         }
 
         :root[data-theme="dark"] {
-            --bg-color: #171513;
-            --page-bg: #221f1c;
-            --text-color: #eae3d2;
-            --text-muted: #9e9382;
-            --border-color: #3b3630;
-            --accent: #d97757;
-            --accent-hover: #e89578;
-            --card-shadow: 4px 4px 0px #0b0a09;
-            --input-bg: #1c1917;
-            --tape-color: rgba(60, 54, 46, 0.5);
+            --bg-color: #12100e;
+            --page-bg: #1c1815;
+            --text-color: #e6dfd1;
+            --text-muted: #948977;
+            --border-color: #332d26;
+            --accent: #d46b4b;
+            --accent-hover: #e5876b;
+            --card-shadow: 4px 4px 0px #080706;
+            --wax-seal: #6b1414;
             --paper-line: rgba(255, 255, 255, 0.03);
+            --candle-wax: #5a5146;
         }
 
         body {
             font-family: 'Courier Prime', Courier, monospace;
             background-color: var(--bg-color);
             color: var(--text-color);
-            max-width: 860px;
-            margin: 30px auto;
+            max-width: 880px;
+            margin: 24px auto;
             padding: 20px;
             line-height: 1.6;
-            transition: background-color 0.25s ease, color 0.25s ease;
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
+        /* Top Sigil Header */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -60,43 +59,113 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 12px;
             margin-bottom: 16px;
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+        }
+
+        .actions-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .theme-toggle-btn, .veil-toggle-btn {
+            background: var(--page-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 2px;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .veil-toggle-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
         }
 
         .header-content {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
             margin-bottom: 20px;
         }
 
         h2, h3, h4 {
-            font-family: 'Special Elite', cursive, serif;
-            letter-spacing: 0.03em;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.04em;
         }
 
         h2.prompt-title {
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             margin: 4px 0;
             line-height: 1.2;
+            font-family: 'Special Elite', cursive;
         }
 
-        .timer-unit {
-            text-align: right;
+        /* Candle & Timer Stage */
+        .altar-clock {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .candle-container {
+            width: 32px;
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        .flame {
+            width: 12px;
+            height: 20px;
+            background: radial-gradient(ellipse at bottom, #fff7c2 0%, #ff9800 60%, transparent 90%);
+            border-radius: 50% 50% 20% 20%;
+            box-shadow: 0 0 14px #ff9800, 0 0 24px rgba(255, 152, 0, 0.4);
+            animation: flicker 0.12s infinite alternate;
+            transform-origin: bottom center;
+            margin-bottom: 2px;
+        }
+
+        .candle-body {
+            width: 14px;
+            height: 48px;
+            background: var(--candle-wax);
+            border-radius: 3px 3px 0 0;
+            border: 1px solid rgba(0,0,0,0.15);
+            transition: height 1s linear;
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-1deg); opacity: 0.95; }
+            100% { transform: scale(1.08) rotate(1.5deg); opacity: 1; filter: drop-shadow(0 0 6px #ff5722); }
         }
 
         .timer {
             font-family: 'Special Elite', monospace;
             font-size: 2.8rem;
-            line-height: 1;
             color: var(--accent);
             font-variant-numeric: tabular-nums;
+        }
+
+        /* The Inscription Slate (Editor) */
+        .editor-wrapper {
+            position: relative;
         }
 
         textarea {
             width: 100%;
             height: 440px;
-            padding: 20px;
-            font-size: 1.05rem;
+            padding: 22px;
+            font-size: 1.1rem;
             line-height: 1.8;
             background-color: var(--page-bg);
             color: var(--text-color);
@@ -108,6 +177,7 @@
             font-family: 'Courier Prime', Courier, monospace;
             background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
             background-size: 100% 1.8em;
+            transition: color 1.5s ease;
         }
 
         textarea:focus {
@@ -115,80 +185,101 @@
             border-color: transparent;
         }
 
-        textarea:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .theme-toggle-btn {
-            background: var(--page-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            font-family: 'Courier Prime', monospace;
-            font-size: 0.8rem;
-            padding: 5px 12px;
-            border-radius: 3px;
-            cursor: pointer;
-            box-shadow: 2px 2px 0px var(--border-color);
+        /* Veil / Blind Ink Mode */
+        textarea.blind-ink {
+            color: transparent !important;
+            text-shadow: 0 0 10px rgba(120, 110, 95, 0.5);
+            caret-color: var(--accent);
         }
 
         .btn-action {
             background: var(--accent);
             color: #ffffff;
-            font-family: 'Special Elite', cursive, serif;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
             font-size: 1.05rem;
-            padding: 10px 22px;
+            padding: 12px 24px;
             border: 1px solid rgba(0,0,0,0.15);
             border-radius: 2px;
             cursor: pointer;
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.25);
+            letter-spacing: 0.05em;
         }
 
         .btn-action:hover {
             background: var(--accent-hover);
         }
 
-        .btn-pdf {
-            background: var(--text-color);
-            color: var(--page-bg);
-            font-family: 'Courier Prime', monospace;
-            font-size: 0.8rem;
-            padding: 5px 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 2px;
-            cursor: pointer;
-            margin-top: 14px;
-            display: inline-block;
-        }
-
-        .btn-pdf:hover {
-            opacity: 0.85;
-        }
-
+        /* The Reckoning: Submissions Divination */
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 24px;
             margin-top: 24px;
         }
 
         .sheet-card {
             background: var(--page-bg);
-            padding: 22px;
+            padding: 24px;
             border: 1px solid var(--border-color);
             border-radius: 2px;
             box-shadow: var(--card-shadow);
             position: relative;
+            animation: inkBleed 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            overflow: hidden;
         }
 
-        .sheet-card h4 {
-            margin-top: 0;
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 8px;
-            color: var(--accent);
+        @keyframes inkBleed {
+            0% { opacity: 0; filter: blur(8px) contrast(200%); transform: translateY(12px); }
+            100% { opacity: 1; filter: blur(0px) contrast(100%); transform: translateY(0); }
+        }
+
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+
+        .card-header h4 {
+            margin: 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        /* Wax Seal Badge */
+        .wax-seal {
+            width: 32px;
+            height: 32px;
+            background: var(--wax-seal);
+            color: #f7ede2;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 1px 1px 3px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.15);
+            user-select: none;
+        }
+
+        .btn-pdf {
+            background: transparent;
+            color: var(--text-color);
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            cursor: pointer;
+            margin-top: 16px;
+            display: inline-block;
+        }
+
+        .btn-pdf:hover {
+            background: var(--border-color);
         }
 
         .hidden {
@@ -196,47 +287,51 @@
         }
 
         @media (max-width: 650px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
+            .grid { grid-template-columns: 1fr; }
+            .header-content { flex-direction: column; align-items: flex-start; gap: 14px; }
         }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <span style="font-size: 0.85rem; letter-spacing: 0.05em;">ROOM CODE: <strong>{{ code }}</strong> &bull; BYLINE: <strong>{{ user_name }}</strong></span>
-        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">◐ Switch Theme</button>
+        <span>SIGIL: <strong>{{ code }}</strong> &bull; SCRIBE: <strong>{{ user_name }}</strong></span>
+        <div class="actions-group">
+            <button class="veil-toggle-btn" onclick="toggleVeil()" id="veilBtn" title="Words fade into fog as you write to prevent self-doubt">🌫 Veil: OFF</button>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">◐ Theme</button>
+        </div>
     </div>
 
     <div class="header-content">
         <div>
-            <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em;">Today's Prompt:</span>
+            <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.1em;">The Inscription Inquiry:</span>
             <h2 class="prompt-title">{{ topic }}</h2>
         </div>
-        <div class="timer-unit">
+        
+        <div class="altar-clock">
+            <div class="candle-container">
+                <div class="flame" id="candle-flame"></div>
+                <div class="candle-body" id="candle-body"></div>
+            </div>
             <div class="timer" id="timer-display">30:00</div>
         </div>
     </div>
 
     {% if is_admin %}
     <div id="admin-controls" style="margin-bottom: 20px;">
-        <button id="start-btn" class="btn-action" onclick="startTimer()">⚡ Strike The Carriage (Start Timer)</button>
+        <button id="start-btn" class="btn-action" onclick="startTimer()">⚡ Awaken The Séance (Start 30-Min)</button>
     </div>
     {% endif %}
 
     <div id="editor-section">
-        <p id="status-msg" style="color: var(--text-muted); font-style: italic; margin-bottom: 8px;">Waiting for host to signal start...</p>
-        <textarea id="editor" placeholder="Rest your fingers on the keys. Words will unlock when the clock strikes..." disabled></textarea>
+        <p id="status-msg" style="color: var(--text-muted); font-style: italic; margin-bottom: 8px;">The slate rests dormant. Awaiting the host's awakening...</p>
+        <div class="editor-wrapper">
+            <textarea id="editor" placeholder="Rest your quill. Ink shall flow once the flame is struck..." disabled></textarea>
+        </div>
     </div>
 
     <div id="reveal-section" class="hidden">
-        <h3>📜 All Unspooled Drafts:</h3>
+        <h3>🜂 The Divination: Revealed Manuscripts</h3>
         <div id="submissions-grid" class="grid"></div>
     </div>
 
@@ -246,21 +341,110 @@
         const currentUserName = "{{ user_name }}";
         const currentTopic = "{{ topic }}";
         const isHost = {{ 'true' if is_admin else 'false' }};
+        const TOTAL_DURATION = 30 * 60;
+        
         let countdownInterval;
+        let isVeilActive = false;
+        let warningChimeTriggered = false;
 
+        // --- 1. Alchemical Web Audio Synthesis (No audio files needed) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // Mechanical quill/keystroke tick
+        function playKeyClick() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            // Randomize pitch slightly for organic typing realism
+            osc.frequency.setValueAtTime(450 + Math.random() * 200, audioCtx.currentTime);
+            osc.type = 'triangle';
+            
+            gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        }
+
+        // 5-Minute Warning Toll (Ethereal Glass Bell)
+        function playWarningChime() {
+            if (!audioCtx) return;
+            [528, 660, 792].forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.2);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime + idx * 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.2 + 2.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + idx * 0.2);
+                osc.stop(audioCtx.currentTime + idx * 0.2 + 2.6);
+            });
+        }
+
+        // Ceremonial Completion Gong
+        function playFinalGong() {
+            if (!audioCtx) return;
+            const freqs = [110, 114, 220, 330];
+            freqs.forEach(freq => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 4.6);
+            });
+        }
+
+        // --- 2. Veil / Blind Ink Toggle ---
+        function toggleVeil() {
+            isVeilActive = !isVeilActive;
+            const editor = document.getElementById('editor');
+            const btn = document.getElementById('veilBtn');
+            if (isVeilActive) {
+                editor.classList.add('blind-ink');
+                btn.classList.add('active');
+                btn.innerText = "🌫 Veil: ACTIVE";
+            } else {
+                editor.classList.remove('blind-ink');
+                btn.classList.remove('active');
+                btn.innerText = "🌫 Veil: OFF";
+            }
+        }
+
+        // Typing audio trigger
+        document.getElementById('editor').addEventListener('keydown', (e) => {
+            initAudio();
+            if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter') {
+                playKeyClick();
+            }
+        });
+
+        // --- 3. Themes & Sockets ---
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('unspooled-theme', theme);
             const btn = document.getElementById('themeBtn');
-            if (btn) {
-                btn.innerText = theme === 'dark' ? '☀ Parchment' : '☾ Carbon/Night';
-            }
+            if (btn) btn.innerText = theme === 'dark' ? '☀ Parchment' : '☾ Shadow Desk';
         }
 
         function toggleTheme() {
             const current = document.documentElement.getAttribute('data-theme') || 'light';
-            const next = current === 'light' ? 'dark' : 'light';
-            setTheme(next);
+            setTheme(current === 'light' ? 'dark' : 'light');
         }
 
         (function() {
@@ -271,6 +455,7 @@
         socket.emit('join', { code: code });
 
         function startTimer() {
+            initAudio();
             socket.emit('start_timer', { code: code });
         }
 
@@ -282,9 +467,10 @@
         }, 5000);
 
         socket.on('timer_started', (data) => {
+            initAudio();
             document.getElementById('editor').disabled = false;
             document.getElementById('editor').focus();
-            document.getElementById('status-msg').innerText = "Keys active. Begin writing!";
+            document.getElementById('status-msg').innerText = "The flame burns. Unspool your mind...";
             if (document.getElementById('admin-controls')) {
                 document.getElementById('admin-controls').classList.add('hidden');
             }
@@ -298,7 +484,7 @@
 
             if (data.status === 'running') {
                 document.getElementById('editor').disabled = false;
-                document.getElementById('status-msg').innerText = "Keys active. Begin writing!";
+                document.getElementById('status-msg').innerText = "The flame burns. Unspool your mind...";
                 if (document.getElementById('admin-controls')) {
                     document.getElementById('admin-controls').classList.add('hidden');
                 }
@@ -310,11 +496,15 @@
 
         socket.on('session_ended', (data) => {
             clearInterval(countdownInterval);
+            playFinalGong();
             showResults(data.submissions);
         });
 
+        // --- 4. Candle & Countdown Engine ---
         function runCountdown(endTime) {
             clearInterval(countdownInterval);
+            const candleBody = document.getElementById('candle-body');
+
             countdownInterval = setInterval(() => {
                 const now = Date.now() / 1000;
                 const remaining = Math.max(0, Math.floor(endTime - now));
@@ -323,8 +513,23 @@
                 const secs = String(remaining % 60).padStart(2, '0');
                 document.getElementById('timer-display').innerText = `${mins}:${secs}`;
 
+                // Candle height melts from 48px down to 6px proportionally
+                const fractionLeft = remaining / TOTAL_DURATION;
+                const newHeight = Math.max(6, Math.floor(fractionLeft * 48));
+                candleBody.style.height = `${newHeight}px`;
+
+                // 5-Minute Warning (300s)
+                if (remaining <= 300 && !warningChimeTriggered) {
+                    warningChimeTriggered = true;
+                    playWarningChime();
+                    document.getElementById('candle-flame').style.boxShadow = "0 0 20px #ff2200, 0 0 35px rgba(255, 0, 0, 0.6)";
+                }
+
                 if (remaining <= 0) {
                     clearInterval(countdownInterval);
+                    candleBody.style.height = `4px`;
+                    document.getElementById('candle-flame').style.display = 'none';
+                    
                     const text = document.getElementById('editor').value;
                     socket.emit('save_draft', { code: code, text: text });
                     if (isHost) {
@@ -334,33 +539,40 @@
             }, 1000);
         }
 
+        // --- 5. The Divination & Wax Seal Badges ---
+        const ALCHEMY_SIGILS = ['🜂', '☽', '🜄', '☉', '🜁', '☿', '🜃', '☬'];
+
         function showResults(submissions) {
             document.getElementById('editor-section').classList.add('hidden');
             document.getElementById('reveal-section').classList.remove('hidden');
             document.getElementById('timer-display').innerText = "00:00";
+            document.getElementById('candle-flame').style.display = 'none';
 
             const container = document.getElementById('submissions-grid');
             container.innerHTML = '';
             
+            let sigilIdx = 0;
             for (const [author, text] of Object.entries(submissions)) {
                 const card = document.createElement('div');
                 card.className = 'sheet-card';
+                card.style.animationDelay = `${sigilIdx * 0.15}s`;
                 
                 const isCurrentUser = (author === currentUserName);
                 const safeAuthor = escapeHtml(author);
-                const safeText = escapeHtml(text || '[Page left blank]');
+                const safeText = escapeHtml(text || '[The ink never settled on this page]');
+                const assignedSigil = ALCHEMY_SIGILS[sigilIdx % ALCHEMY_SIGILS.length];
+                sigilIdx++;
 
                 let cardHtml = `
-                    <h4>
-                        <span>⌨ ${safeAuthor}</span>
-                        ${isCurrentUser ? '<small style="color:var(--text-muted); font-size:0.75rem;">(You)</small>' : ''}
-                    </h4>
-                    <p style="white-space: pre-wrap; font-family: 'Courier Prime', monospace; line-height: 1.7;">${safeText}</p>
+                    <div class="card-header">
+                        <h4>${safeAuthor} ${isCurrentUser ? '<small style="color:var(--text-muted); font-size:0.75rem;">(You)</small>' : ''}</h4>
+                        <div class="wax-seal" title="Alchemical Seal">${assignedSigil}</div>
+                    </div>
+                    <p style="white-space: pre-wrap; font-family: 'Courier Prime', monospace; line-height: 1.7; font-size: 1rem;">${safeText}</p>
                 `;
 
-                // If this is the current writer's text, add PDF export button
                 if (isCurrentUser || isHost) {
-                    cardHtml += `<button class="btn-pdf" onclick="downloadPDF('${safeAuthor}')">📥 Download Manuscript (PDF)</button>`;
+                    cardHtml += `<button class="btn-pdf" onclick="downloadPDF('${safeAuthor}')">📥 Seal & Inscribe to PDF</button>`;
                 }
 
                 card.innerHTML = cardHtml;
@@ -372,32 +584,31 @@
             const rawText = document.getElementById('editor').value || "No content.";
             const dateStr = new Date().toLocaleDateString();
 
-            // Create a clean off-screen printable manuscript
             const element = document.createElement('div');
-            element.style.padding = '40px';
+            element.style.padding = '45px';
             element.style.fontFamily = "'Courier Prime', Courier, monospace";
             element.style.color = '#111';
             element.style.backgroundColor = '#fff';
             element.style.lineHeight = '1.8';
 
             element.innerHTML = `
-                <div style="border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 24px;">
-                    <p style="font-size: 11px; text-transform: uppercase; margin: 0; color: #666; letter-spacing: 1px;">UNSPOOLED &bull; SESSION MANUSCRIPT</p>
-                    <h1 style="font-size: 22px; margin: 6px 0;">${escapeHtml(currentTopic)}</h1>
-                    <p style="font-size: 13px; margin: 0; color: #444;">Author: <strong>${escapeHtml(author)}</strong> &bull; Date: ${dateStr}</p>
+                <div style="border-bottom: 2px solid #222; padding-bottom: 14px; margin-bottom: 24px;">
+                    <p style="font-size: 10px; text-transform: uppercase; margin: 0; color: #777; letter-spacing: 2px;">UNSPOOLED &bull; OCCULT MANUSCRIPT ARCHIVE</p>
+                    <h1 style="font-family: 'Georgia', serif; font-size: 24px; margin: 8px 0;">${escapeHtml(currentTopic)}</h1>
+                    <p style="font-size: 12px; margin: 0; color: #444;">Scribe: <strong>${escapeHtml(author)}</strong> &bull; Date: ${dateStr}</p>
                 </div>
                 <div style="white-space: pre-wrap; font-size: 14px; text-align: justify;">${escapeHtml(rawText)}</div>
-                <div style="margin-top: 50px; border-top: 1px dotted #aaa; padding-top: 10px; font-size: 11px; color: #888; text-align: center;">
-                    Generated by Unspooled &bull; Spontaneous Timed Writing
+                <div style="margin-top: 60px; border-top: 1px dashed #aaa; padding-top: 12px; font-size: 11px; color: #888; text-align: center;">
+                    🜂 Sealed under the Unspooled Hourglass 🜂
                 </div>
             `;
 
             const opt = {
-                margin:       15,
-                filename:     `unspooled-${author.toLowerCase().replace(/[^a-z0-9]/g, '_')}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin: 15,
+                filename: `unspooled-manuscript-${author.toLowerCase().replace(/[^a-z0-9]/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save();
